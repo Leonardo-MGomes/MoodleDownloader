@@ -1,7 +1,7 @@
 from env import USERNAME, PASSWORD
 
 import enum
-from dataclasses import dataclass, InitVar
+from dataclasses import dataclass
 from typing import Tuple
 
 import requests as rq
@@ -12,12 +12,8 @@ from bs4 import BeautifulSoup
 class Login:
     Username: str
     Password: str
-    LoginToken: InitVar[str] = None
-    LoginCookies: InitVar[dict[str, str]] = None
-
-    def __post_init__(self, login_token: str, login_cookies: dict[str, str]):
-        self.LoginToken = login_token
-        self.LoginCookies = login_cookies
+    LoginToken: str = ""
+    LoginCookies: dict[str, str] = None
 
 class ResourceType(enum.Enum):
     ASSIGNMENT = "assign"
@@ -76,6 +72,8 @@ class Scraper:
         self.session = rq.Session()
         self.session.headers["User-Agent"] = self.user_agent
         self.login = login
+        if self.login.LoginCookies is not None:
+            self.session.cookies.update(self.login.LoginCookies)
 
     def get_login(self) -> None:
         login_index_page = self.session.get(f"{self.base_url}/login/index.php")
@@ -112,7 +110,7 @@ class Scraper:
             topic_description = topic_element.find("div", class_="summarytext").get_text(" ", strip=True)
         except AttributeError:
             print(f"Topic {topic_title}/{topic_element.attrs["id"]} seems to not have a description, skipping.")
-            return
+            return None
         current_topic = Topic(topic_title, topic_description, [])
         for resource_item in topic_element.find("ul").find_all("li"):
             resource = self._get_resource(resource_item)
