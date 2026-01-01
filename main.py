@@ -1,3 +1,5 @@
+from env import USERNAME, PASSWORD
+
 import enum
 from dataclasses import dataclass, InitVar
 from typing import Tuple
