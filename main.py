@@ -25,6 +25,7 @@ class ResourceType(enum.Enum):
     FORUM = "forum"
     LABEL = "label"
     FEEDBACK = "feedback"
+    JOURNAL = "journal"
     UNKNOWN = "unknown"
 
     # TODO: Resource (as an example) is both for learning and for assignments
@@ -128,8 +129,6 @@ class Scraper:
         course_data = Course(course_id, int(split_course_title[0].split(" ")[1]), split_course_title[1][1:], [])
 
         for topic in course_soup.find_all("li", class_="section"):
-            if topic.attrs["id"] == "section-0":
-                continue
             current_topic = self._get_topic(topic)
             course_data.Topics.append(current_topic)
         return course_data
