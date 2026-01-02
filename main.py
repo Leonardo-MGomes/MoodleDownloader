@@ -2,7 +2,7 @@ from env import USERNAME, PASSWORD
 
 import enum
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Optional
 
 import requests as rq
 from bs4 import BeautifulSoup
@@ -12,8 +12,8 @@ from bs4 import BeautifulSoup
 class Login:
     Username: str
     Password: str
-    LoginToken: str = ""
-    LoginCookies: dict[str, str] = None
+    LoginToken: Optional[str] = ""
+    LoginCookies: Optional[dict[str, str]] = None
 
 class ResourceType(enum.Enum):
     ASSIGNMENT = "assign"
