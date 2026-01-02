@@ -2,16 +2,16 @@ import requests as rq
 from bs4 import BeautifulSoup
 
 from .auth import Login
+from .config import DEFAULT_CONFIG, AppConfig
 from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
-    base_url: str = "https://moodle.bbbaden.ch"
-    user_agent: str = "MoodleDownloader/0.1-dev (l.mirandagomes.inf25@stud.bbbaden.ch)"
-
-    def __init__(self, login: Login, session: rq.Session):
+    def __init__(self, login: Login, session: rq.Session, config: AppConfig = DEFAULT_CONFIG):
         self.session = session
-        self.session.headers["User-Agent"] = self.user_agent
+        self.config = config
+        self.session.headers["User-Agent"] = self.config.USER_AGENT
+        self.base_url = self.config.BASE_URL
         self.login = login
         if self.login.LoginCookies is not None:
             self.session.cookies.update(self.login.LoginCookies)
