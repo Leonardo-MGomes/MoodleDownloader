@@ -1,86 +1,8 @@
-import json
-
-from env import USERNAME, PASSWORD
-
-import enum
-from dataclasses import dataclass
-from typing import Tuple, Optional
-
 import requests as rq
 from bs4 import BeautifulSoup
 
-class Login:
-    def __init__(self, username: str, password: str, login_token: Optional[str] = "", login_cookies: Optional[dict[str, str]] = None):
-        self.Username = username
-        self.Password = password
-        self.LoginToken = login_token
-        self.LoginCookies = login_cookies
-
-    def __str__(self):
-        return self.Username
-
-    @classmethod
-    def session_from_file(cls, filename: str = "session.json") -> "Login": # TODO: Make an encryption or redact password from session
-        with open(filename, "r") as file:
-            file_session = json.loads(file.read())
-            clazz = cls("", "")
-            clazz.__dict__ = file_session
-            return clazz
-
-    def session_to_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
-        with open(filename, "w") as file:
-            file.write(json.dumps(self.__dict__, indent=4))
-        return
-
-class ResourceType(enum.Enum):
-    ASSIGNMENT = "assign"
-    RESOURCE = "resource"
-    FOLDER = "folder"
-    PAGE = "page"
-    URL = "url"
-    QUIZ = "quiz"
-    FORUM = "forum"
-    LABEL = "label"
-    FEEDBACK = "feedback"
-    JOURNAL = "journal"
-    UNKNOWN = "unknown"
-
-    # TODO: Resource (as an example) is both for learning and for assignments
-    def is_learning(self):
-        return self in {
-            ResourceType.RESOURCE,
-            ResourceType.FOLDER,
-            ResourceType.PAGE,
-            ResourceType.URL
-        }
-
-    def is_assignment(self):
-        return self in {
-            ResourceType.ASSIGNMENT,
-            ResourceType.QUIZ
-        }
-
-@dataclass
-class Resource:
-    Id: int
-    Type: ResourceType
-    InternalId: Tuple[int, int] or None
-    Name: str
-    DependencyId: int or None
-
-
-@dataclass
-class Topic:
-    Title: str
-    Description: str
-    Resources: list[Resource]
-
-@dataclass
-class Course:
-    Id: int
-    CourseNumber: int
-    Title: str
-    Topics: list[Topic]
+from .auth import Login
+from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
@@ -100,13 +22,13 @@ class Scraper:
         login_token = login_soup.find("input", attrs={"name": "logintoken"}).attrs["value"]
         self.session.post(f"{self.base_url}/login/index.php",
                           data={"anchor": "", "logintoken": login_token, "username": self.login.Username,
-                                          "password": self.login.Password})
+                                "password": self.login.Password})
         self.login.LoginToken = login_token
         self.login.LoginCookies = self.session.cookies.get_dict()
         return
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
-        course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}") # TODO: Check for 404
+        course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")  # TODO: Check for 404
         course_soup = BeautifulSoup(course_page.content, "html.parser")
         return course_soup
 
@@ -136,12 +58,11 @@ class Scraper:
         current_topic = Topic(topic_title, topic_description, [])
         for resource_item in topic_element.find("ul").find_all("li"):
             resource = self._get_resource(resource_item)
-            match resource.Type.name: # PLACEHOLDER
+            match resource.Type.name:  # PLACEHOLDER
                 case _:
                     pass
             current_topic.Resources.append(resource)
         return current_topic
-
 
     def create_dataclass(self, course_id) -> Course:
         course_soup = self._get_course(course_id)
