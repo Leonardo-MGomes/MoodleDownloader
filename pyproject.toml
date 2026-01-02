@@ -1,0 +1,10 @@
+[project]
+name = "moodle-downloader"
+version = "0.1a1"
+authors = [
+    { name = "Leonardo Miranda Gomes", email = "l.mirandagomes.inf25@stud.bbbaden.ch" },
+]
+dependencies = [
+    "requests >= 2.32",
+    "beautifulsoup4 >= 4.14",
+]
