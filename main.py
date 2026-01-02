@@ -69,8 +69,8 @@ class Scraper:
     base_url: str = "https://moodle.bbbaden.ch"
     user_agent: str = "MoodleDownloader/0.1-dev (l.mirandagomes.inf25@stud.bbbaden.ch)"
 
-    def __init__(self, login: Login):
-        self.session = rq.Session()
+    def __init__(self, login: Login, session: rq.Session):
+        self.session = session
         self.session.headers["User-Agent"] = self.user_agent
         self.login = login
         if self.login.LoginCookies is not None:
