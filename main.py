@@ -7,13 +7,19 @@ from typing import Tuple, Optional
 import requests as rq
 from bs4 import BeautifulSoup
 
-
-@dataclass
 class Login:
     Username: str
     Password: str
     LoginToken: Optional[str] = ""
     LoginCookies: Optional[dict[str, str]] = None
+    def __init__(self, username: str, password: str, login_token: Optional[str] = "", login_cookies: Optional[dict[str, str]] = None):
+        self.Username = username
+        self.Password = password
+        self.LoginToken = login_token
+        self.LoginCookies = login_cookies
+
+    def __str__(self):
+        return self.Username
 
 class ResourceType(enum.Enum):
     ASSIGNMENT = "assign"
