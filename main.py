@@ -49,6 +49,7 @@ class Resource:
     Type: ResourceType
     InternalId: Tuple[int, int] or None
     Name: str
+    DependencyId: int or None
 
 
 @dataclass
@@ -103,7 +104,10 @@ class Scraper:
         resource_id = int(resource_item.attrs["data-id"])
         resource_type = self._detect_resource_type(resource_item)
         resource_name = resource_item.div.attrs["data-activityname"]
-        return Resource(resource_id, resource_type, None, resource_name)
+        resource_dependency = None
+        if resource_item.find("div", class_="availabilityinfo") is not None:
+            resource_dependency = int(resource_item.find(attrs={"data-cm-name-for": True})["data-cm-name-for"])
+        return Resource(resource_id, resource_type, None, resource_name, resource_dependency)
 
     def _get_topic(self, topic_element) -> Topic | None:
         topic_title = topic_element.find("h3", attrs={"data-for": "section_title"}).get_text(" ", strip=True)
