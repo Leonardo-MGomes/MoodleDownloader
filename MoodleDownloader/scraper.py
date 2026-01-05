@@ -1,18 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
 
-from .auth import MoodleLogin
 from .config import DEFAULT_CONFIG, AppConfig
 from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
-    def __init__(self, login: MoodleLogin, session: requests.Session, config: AppConfig = DEFAULT_CONFIG):
+    def __init__(self, session: requests.Session, config: AppConfig = DEFAULT_CONFIG):
         self.session = session
         self.config = config
         self.session.headers["User-Agent"] = self.config.USER_AGENT
         self.base_url = self.config.BASE_URL
-        self.login = login
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
         course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")  # TODO: Check for 404
