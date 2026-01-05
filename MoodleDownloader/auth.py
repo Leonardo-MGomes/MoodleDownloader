@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass
 from typing import Optional
 
@@ -58,14 +57,3 @@ class MoodleAuth:
         login_cookies = self._get_login_cookies(login_token)
         moodle_session = MoodleSession(login_cookies, login_token)
         return moodle_session
-
-    def session_from_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
-        with open(filename, "r") as file:
-            file_session = json.loads(file.read())
-            self.login.__dict__ = file_session
-        return
-
-    def session_to_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
-        with open(filename, "w") as file:
-            file.write(json.dumps(self.login.__dict__, indent=4))
-        return
