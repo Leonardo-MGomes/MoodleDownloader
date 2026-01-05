@@ -13,8 +13,6 @@ class Scraper:
         self.session.headers["User-Agent"] = self.config.USER_AGENT
         self.base_url = self.config.BASE_URL
         self.login = login
-        if self.login.LoginCookies is not None:
-            self.session.cookies.update(self.login.LoginCookies)
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
         course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")  # TODO: Check for 404

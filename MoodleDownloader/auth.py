@@ -1,39 +1,27 @@
-from typing import Optional
 import json
+from dataclasses import dataclass
+from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
+
 from .config import DEFAULT_CONFIG, AppConfig
 
 
+@dataclass
 class MoodleLogin:
-    def __init__(self, username: str, password: str, login_token: Optional[str], login_cookies: Optional[dict[str, str]]):
-        self.Username = username
-        self.Password = password
-        self.LoginToken = login_token
-        self.LoginCookies = login_cookies
-
-    def __str__(self):
-        return self.Username
-
-    @classmethod
-    def session_from_file(cls, filename: str = "session.json") -> "MoodleLogin": # TODO: Make an encryption or redact password from session
-        with open(filename, "r") as file:
-            file_session = json.loads(file.read())
-            clazz = cls("", "")
-            clazz.__dict__ = file_session
-            return clazz
-
-    def session_to_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
-        with open(filename, "w") as file:
-            file.write(json.dumps(self.__dict__, indent=4))
-        return
+    Username: str
+    Password: str
+    LoginToken: Optional[str] = None
+    LoginCookies: Optional[dict] = None
 
 
 class MoodleAuth:
-    def __init__(self, session: requests.Session, login: Optional[MoodleLogin], app_config: Optional[AppConfig] = DEFAULT_CONFIG):
+    def __init__(self, session: requests.Session, login: Optional[MoodleLogin] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
-        self.login = login
+        self.login = login or MoodleLogin("", "") # TODO: Check/Ask for login creds instead of using empty MoodleLogin
+        if self.login.LoginCookies is not None:
+            self.session.cookies.update(self.login.LoginCookies)
         self.base_url = app_config.BASE_URL
 
     def _is_login_valid(self) -> bool:
@@ -53,19 +41,29 @@ class MoodleAuth:
         return login_token
 
     def _get_login_cookies(self) -> None:
-        login_token = self._get_login_token()
+        self.login.LoginToken = self._get_login_token()
         data = {
             "anchor": "",
-            "logintoken": login_token,
+            "logintoken": self.login.LoginToken,
             "username": self.login.Username,
             "password": self.login.Password
         }
         self.session.post(f"{self.base_url}/login/index.php", data=data)
-        self.login.LoginToken = login_token
         self.login.LoginCookies = self.session.cookies.get_dict()
         return
 
     def get_login(self) -> MoodleLogin:
-        if not self.login or not self._is_login_valid():
+        if not self._is_login_valid():
             self._get_login_cookies()
         return self.login
+
+    def session_from_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
+        with open(filename, "r") as file:
+            file_session = json.loads(file.read())
+            self.login.__dict__ = file_session
+        return
+
+    def session_to_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
+        with open(filename, "w") as file:
+            file.write(json.dumps(self.login.__dict__, indent=4))
+        return
