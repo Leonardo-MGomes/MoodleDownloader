@@ -16,17 +16,6 @@ class Scraper:
         if self.login.LoginCookies is not None:
             self.session.cookies.update(self.login.LoginCookies)
 
-    def get_login(self) -> None:
-        login_index_page = self.session.get(f"{self.base_url}/login/index.php")
-        login_soup = BeautifulSoup(login_index_page.content, "html.parser")
-        login_token = login_soup.find("input", attrs={"name": "logintoken"}).attrs["value"]
-        self.session.post(f"{self.base_url}/login/index.php",
-                          data={"anchor": "", "logintoken": login_token, "username": self.login.Username,
-                                "password": self.login.Password})
-        self.login.LoginToken = login_token
-        self.login.LoginCookies = self.session.cookies.get_dict()
-        return
-
     def _get_course(self, course_id: int) -> BeautifulSoup:
         course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")  # TODO: Check for 404
         course_soup = BeautifulSoup(course_page.content, "html.parser")
