@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from .config import DEFAULT_CONFIG, AppConfig
 
 
-class Login:
+class MoodleLogin:
     def __init__(self, username: str, password: str, login_token: Optional[str], login_cookies: Optional[dict[str, str]]):
         self.Username = username
         self.Password = password
@@ -17,7 +17,7 @@ class Login:
         return self.Username
 
     @classmethod
-    def session_from_file(cls, filename: str = "session.json") -> "Login": # TODO: Make an encryption or redact password from session
+    def session_from_file(cls, filename: str = "session.json") -> "MoodleLogin": # TODO: Make an encryption or redact password from session
         with open(filename, "r") as file:
             file_session = json.loads(file.read())
             clazz = cls("", "")
@@ -31,7 +31,7 @@ class Login:
 
 
 class MoodleAuth:
-    def __init__(self, session: requests.Session, login: Optional[Login], app_config: Optional[AppConfig] = DEFAULT_CONFIG):
+    def __init__(self, session: requests.Session, login: Optional[MoodleLogin], app_config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
         self.login = login
         self.base_url = app_config.BASE_URL
@@ -65,7 +65,7 @@ class MoodleAuth:
         self.login.LoginCookies = self.session.cookies.get_dict()
         return
 
-    def get_login(self) -> Login:
+    def get_login(self) -> MoodleLogin:
         if not self.login or not self._is_login_valid():
             self._get_login_cookies()
         return self.login
