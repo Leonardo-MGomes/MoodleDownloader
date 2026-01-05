@@ -1,4 +1,4 @@
-import requests as rq
+import requests
 from bs4 import BeautifulSoup
 
 from .auth import Login
@@ -7,7 +7,7 @@ from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
-    def __init__(self, login: Login, session: rq.Session, config: AppConfig = DEFAULT_CONFIG):
+    def __init__(self, login: Login, session: requests.Session, config: AppConfig = DEFAULT_CONFIG):
         self.session = session
         self.config = config
         self.session.headers["User-Agent"] = self.config.USER_AGENT
