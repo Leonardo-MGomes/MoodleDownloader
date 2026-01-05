@@ -35,13 +35,13 @@ class MoodleAuth:
             case _:
                 raise Exception("Site gave a different status code than expected")
 
-    def _get_login_token(self) -> str:
+    def _fetch_login_token(self) -> str:
         login_index_page = self.session.get(f"{self.base_url}/login/index.php")
         login_soup = BeautifulSoup(login_index_page.content, features="html.parser")
         login_token = login_soup.find(name="input", attrs={"name": "logintoken"}).attrs["value"]
         return login_token
 
-    def _get_login_cookies(self, token: str) -> dict:
+    def _perform_login(self, token: str) -> dict:
         data = {
             "anchor": "",
             "logintoken": token,
@@ -53,7 +53,7 @@ class MoodleAuth:
         return login_cookies
 
     def login(self) -> MoodleSession:
-        login_token = self._get_login_token()
-        login_cookies = self._get_login_cookies(login_token)
+        login_token = self._fetch_login_token()
+        login_cookies = self._perform_login(login_token)
         moodle_session = MoodleSession(login_cookies, login_token)
         return moodle_session
