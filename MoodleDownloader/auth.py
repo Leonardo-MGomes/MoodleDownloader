@@ -8,23 +8,25 @@ from bs4 import BeautifulSoup
 from .config import DEFAULT_CONFIG, AppConfig
 
 
+@dataclass(frozen=True)
+class MoodleCredentials:
+    username: str
+    password: str
+
+
 @dataclass
-class MoodleLogin:
-    Username: str
-    Password: str
-    LoginToken: Optional[str] = None
-    LoginCookies: Optional[dict] = None
+class MoodleSession:
+    login_cookies: dict
+    login_token: Optional[str] = None
 
 
 class MoodleAuth:
-    def __init__(self, session: requests.Session, login: Optional[MoodleLogin] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
+    def __init__(self, session: requests.Session, moodle_credentials: MoodleCredentials, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
-        self.login = login or MoodleLogin("", "") # TODO: Check/Ask for login creds instead of using empty MoodleLogin
-        if self.login.LoginCookies is not None:
-            self.session.cookies.update(self.login.LoginCookies)
+        self.credentials = moodle_credentials
         self.base_url = app_config.BASE_URL
 
-    def _is_login_valid(self) -> bool:
+    def is_session_valid(self) -> bool:
         index = self.session.head(self.base_url, allow_redirects=False)
         match index.status_code:
             case 303:
@@ -40,22 +42,22 @@ class MoodleAuth:
         login_token = login_soup.find(name="input", attrs={"name": "logintoken"}).attrs["value"]
         return login_token
 
-    def _get_login_cookies(self) -> None:
-        self.login.LoginToken = self._get_login_token()
+    def _get_login_cookies(self, token: str) -> dict:
         data = {
             "anchor": "",
-            "logintoken": self.login.LoginToken,
-            "username": self.login.Username,
-            "password": self.login.Password
+            "logintoken": token,
+            "username": self.credentials.username,
+            "password": self.credentials.password
         }
         self.session.post(f"{self.base_url}/login/index.php", data=data)
-        self.login.LoginCookies = self.session.cookies.get_dict()
-        return
+        login_cookies = self.session.cookies.get_dict()
+        return login_cookies
 
-    def get_login(self) -> MoodleLogin:
-        if not self._is_login_valid():
-            self._get_login_cookies()
-        return self.login
+    def login(self) -> MoodleSession:
+        login_token = self._get_login_token()
+        login_cookies = self._get_login_cookies(login_token)
+        moodle_session = MoodleSession(login_cookies, login_token)
+        return moodle_session
 
     def session_from_file(self, filename: str = "session.json") -> None: # TODO: Make an encryption or redact password from session
         with open(filename, "r") as file:
