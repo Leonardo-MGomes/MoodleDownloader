@@ -14,6 +14,7 @@ class ResourceType(enum.Enum):
     LABEL = "label"
     FEEDBACK = "feedback"
     JOURNAL = "journal"
+    H5P_ACTIVITY = "h5pactivity"
     UNKNOWN = "unknown"
 
     # TODO: Resource (as an example) is both for learning and for assignments
