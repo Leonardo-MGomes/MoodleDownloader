@@ -1,6 +1,6 @@
 [project]
 name = "moodle-downloader"
-version = "0.1a1"
+version = "0.1a2"
 authors = [
     { name = "Leonardo Miranda Gomes", email = "l.mirandagomes.inf25@stud.bbbaden.ch" },
 ]
