@@ -1,14 +1,19 @@
+from typing import Optional
+
 import requests
 from bs4 import BeautifulSoup
 
+from .auth import MoodleAuth
 from .config import DEFAULT_CONFIG, AppConfig
 from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
-    def __init__(self, session: requests.Session, config: AppConfig = DEFAULT_CONFIG):
+    # auth is optional and only here for automatic logins
+    def __init__(self, session: requests.Session, auth: Optional[MoodleAuth] = None, config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
         self.config = config
+        self.auth = auth
         self.session.headers["User-Agent"] = self.config.USER_AGENT
         self.base_url = self.config.BASE_URL
 
@@ -50,6 +55,8 @@ class Scraper:
         return current_topic
 
     def create_dataclass(self, course_id) -> Course:
+        if not self.auth.is_session_valid() and not self.auth.credentials is None:
+            self.auth.login()
         course_soup = self._get_course(course_id)
         full_course_title = course_soup.find("div", class_="page-header-headings").h1.get_text()
         split_course_title = full_course_title.split(":")
