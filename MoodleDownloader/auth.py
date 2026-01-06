@@ -25,6 +25,11 @@ class MoodleAuth:
         self.credentials = moodle_credentials
         self.base_url = app_config.BASE_URL
 
+    @classmethod
+    def from_credentials(cls, session: requests.Session, username: str, password: str, **kwargs) -> "MoodleAuth":
+        credentials = MoodleCredentials(username, password)
+        return cls(session=session, moodle_credentials=credentials, **kwargs)
+
     def is_session_valid(self) -> bool:
         index = self.session.head(self.base_url, allow_redirects=False)
         match index.status_code:
