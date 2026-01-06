@@ -1,31 +1,21 @@
-import requests as rq
+from typing import Optional
+
+import requests
 from bs4 import BeautifulSoup
 
-from .auth import Login
+from .auth import MoodleAuth
 from .config import DEFAULT_CONFIG, AppConfig
 from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
-    def __init__(self, login: Login, session: rq.Session, config: AppConfig = DEFAULT_CONFIG):
+    # auth is optional and only here for automatic logins
+    def __init__(self, session: requests.Session, auth: Optional[MoodleAuth] = None, config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
         self.config = config
+        self.auth = auth
         self.session.headers["User-Agent"] = self.config.USER_AGENT
         self.base_url = self.config.BASE_URL
-        self.login = login
-        if self.login.LoginCookies is not None:
-            self.session.cookies.update(self.login.LoginCookies)
-
-    def get_login(self) -> None:
-        login_index_page = self.session.get(f"{self.base_url}/login/index.php")
-        login_soup = BeautifulSoup(login_index_page.content, "html.parser")
-        login_token = login_soup.find("input", attrs={"name": "logintoken"}).attrs["value"]
-        self.session.post(f"{self.base_url}/login/index.php",
-                          data={"anchor": "", "logintoken": login_token, "username": self.login.Username,
-                                "password": self.login.Password})
-        self.login.LoginToken = login_token
-        self.login.LoginCookies = self.session.cookies.get_dict()
-        return
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
         course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")  # TODO: Check for 404
@@ -65,6 +55,8 @@ class Scraper:
         return current_topic
 
     def create_dataclass(self, course_id) -> Course:
+        if not self.auth.is_session_valid() and not self.auth.credentials is None:
+            self.auth.login()
         course_soup = self._get_course(course_id)
         full_course_title = course_soup.find("div", class_="page-header-headings").h1.get_text()
         split_course_title = full_course_title.split(":")
