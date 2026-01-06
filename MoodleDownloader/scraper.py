@@ -26,7 +26,11 @@ class Scraper:
     def _detect_resource_type(li) -> ResourceType:
         for cls in li.get("class", []):
             if cls.startswith("modtype_"):
-                return ResourceType(cls.replace("modtype_", "")) or ResourceType.UNKNOWN
+                try:
+                    return ResourceType(cls.replace("modtype_", ""))
+                except ValueError:
+                    print(f"Type {cls.replace("modtype_", "")} not recognized")
+                    return ResourceType.UNKNOWN
         return ResourceType.UNKNOWN
 
     def _get_resource(self, resource_item) -> Resource:
