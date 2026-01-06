@@ -20,9 +20,11 @@ class MoodleSession:
 
 
 class MoodleAuth:
-    def __init__(self, session: requests.Session, moodle_credentials: MoodleCredentials, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
+    def __init__(self, session: requests.Session, moodle_credentials: Optional[MoodleCredentials] = None,
+                 moodle_session: Optional[MoodleSession] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
         self.credentials = moodle_credentials
+        self.moodle_session = moodle_session
         self.base_url = app_config.BASE_URL
 
     @classmethod
@@ -47,6 +49,8 @@ class MoodleAuth:
         return login_token
 
     def _perform_login(self, token: str) -> dict:
+        if not self.credentials:
+            raise Exception("No credentials provided")
         data = {
             "anchor": "",
             "logintoken": token,

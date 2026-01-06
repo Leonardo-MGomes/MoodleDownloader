@@ -1,5 +1,4 @@
-import auth
-from .auth import MoodleAuth, MoodleLogin
+from .auth import MoodleAuth, MoodleSession, MoodleCredentials
 from .scraper import Scraper
 
-__all__ = ['auth', 'MoodleAuth', 'MoodleLogin', 'Scraper']
+__all__ = ['auth', 'MoodleAuth', 'MoodleSession', 'MoodleCredentials', 'Scraper']
