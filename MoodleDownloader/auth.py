@@ -23,9 +23,11 @@ class MoodleAuth:
     def __init__(self, session: requests.Session, moodle_credentials: Optional[MoodleCredentials] = None,
                  moodle_session: Optional[MoodleSession] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
+        self.base_url = app_config.BASE_URL
+        self.user_agent = app_config.USER_AGENT
+        self.session.headers["User-Agent"] = self.user_agent
         self.credentials = moodle_credentials
         self.moodle_session = moodle_session
-        self.base_url = app_config.BASE_URL
 
     @classmethod
     def from_credentials(cls, session: requests.Session, username: str, password: str, **kwargs) -> "MoodleAuth":

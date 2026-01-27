@@ -14,7 +14,6 @@ class Scraper:
         self.session = session
         self.config = config
         self.auth = auth
-        self.session.headers["User-Agent"] = self.config.USER_AGENT
         self.base_url = self.config.BASE_URL
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
