@@ -78,3 +78,11 @@ class MoodleDatabase:
             courses.append(Course(course[0], course[1], course[2], topics.copy()))
 
         return courses
+    
+    def check_database_for_course_id(self, course_id: int) -> bool:
+        self.cursor.execute("SELECT moodle_id FROM Course WHERE moodle_id = ?", [course_id])
+        data = self.cursor.fetchone()
+        if data is None or int(data[0]) != course_id:
+            return False
+        return True
+
