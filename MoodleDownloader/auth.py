@@ -28,6 +28,8 @@ class MoodleAuth:
         self.session.headers["User-Agent"] = self.user_agent
         self.credentials = moodle_credentials
         self.moodle_session = moodle_session
+        if self.moodle_session is not None:
+            requests.utils.add_dict_to_cookiejar(self.session.cookies, self.moodle_session.login_cookies)
 
     @classmethod
     def from_credentials(cls, session: requests.Session, username: str, password: str, **kwargs) -> "MoodleAuth":
