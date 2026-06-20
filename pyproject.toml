@@ -4,6 +4,7 @@ version = "0.1a2"
 authors = [
     { name = "Leonardo Miranda Gomes", email = "l.mirandagomes.inf25@stud.bbbaden.ch" },
 ]
+requires-python = ">=3.10"
 dependencies = [
     "requests >= 2.32",
     "beautifulsoup4 >= 4.14",
