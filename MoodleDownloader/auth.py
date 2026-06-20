@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .config import DEFAULT_CONFIG, AppConfig
+from .exceptions import MoodleAuthError, MoodleNoCredentialsError
 
 
 @dataclass(frozen=True)
@@ -44,24 +45,31 @@ class MoodleAuth:
             case 200:
                 return True
             case _:
-                raise Exception("Site gave a different status code than expected")
+                raise MoodleAuthError(f"Site gave a different status code than expected: {index.status_code}")
 
     def _fetch_login_token(self) -> str:
         login_index_page = self.session.get(f"{self.base_url}/login/index.php")
+        if login_index_page.status_code != 200:
+            raise MoodleAuthError(f"Failed to fetch login page. Status code: {login_index_page.status_code}")
         login_soup = BeautifulSoup(login_index_page.content, features="html.parser")
-        login_token = login_soup.find(name="input", attrs={"name": "logintoken"}).attrs["value"]
+        token_input = login_soup.find(name="input", attrs={"name": "logintoken"})
+        if token_input is None or "value" not in token_input.attrs:
+            raise MoodleAuthError("Failed to find login token in the login page")
+        login_token = token_input.attrs["value"]
         return login_token
 
     def _perform_login(self, token: str) -> dict:
         if not self.credentials:
-            raise Exception("No credentials provided")
+            raise MoodleNoCredentialsError("No credentials provided")
         data = {
             "anchor": "",
             "logintoken": token,
             "username": self.credentials.username,
             "password": self.credentials.password
         }
-        self.session.post(f"{self.base_url}/login/index.php", data=data)
+        response = self.session.post(f"{self.base_url}/login/index.php", data=data)
+        if response.status_code != 200:
+            raise MoodleAuthError(f"Failed to perform login. Status code: {response.status_code}")
         login_cookies = self.session.cookies.get_dict()
         return login_cookies
 
@@ -69,4 +77,6 @@ class MoodleAuth:
         login_token = self._fetch_login_token()
         login_cookies = self._perform_login(login_token)
         moodle_session = MoodleSession(login_cookies, login_token)
+        if not self.is_session_valid():
+            raise MoodleAuthError("Login failed: Invalid credentials or session could not be established")
         return moodle_session

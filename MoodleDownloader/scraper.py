@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from .auth import MoodleAuth
 from .config import DEFAULT_CONFIG, AppConfig
 from .models import Course, Topic, Resource, ResourceType
+from .exceptions import MoodleCourseNotFound, MoodleException
 
 
 class Scraper:
@@ -17,7 +18,9 @@ class Scraper:
         self.base_url = self.config.BASE_URL
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
-        course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")  # TODO: Check for 404
+        course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")
+        if course_page.status_code == 404:
+            raise MoodleCourseNotFound(f"Course with the id {course_id} was not found")
         course_soup = BeautifulSoup(course_page.content, "html.parser")
         return course_soup
 
@@ -61,9 +64,24 @@ class Scraper:
         if not self.auth.is_session_valid() and not self.auth.credentials is None:
             self.auth.login()
         course_soup = self._get_course(course_id)
-        full_course_title = course_soup.find("div", class_="page-header-headings").h1.get_text()
-        split_course_title = full_course_title.split(":")
-        course_data = Course(course_id, int(split_course_title[0].split(" ")[1]), split_course_title[1][1:], [])
+        try:
+            header_div = course_soup.find("div", class_="page-header-headings")
+            if not header_div or not header_div.h1:
+                err_msg = course_soup.find("div", class_="errormessage") or course_soup.find("div", class_="errorbox")
+                if err_msg:
+                    raise MoodleException(f"Moodle error: {err_msg.get_text(strip=True)}")
+                raise MoodleCourseNotFound(f"Course with the id {course_id} could not be found or page layout is unexpected")
+            full_course_title = header_div.h1.get_text()
+            split_course_title = full_course_title.split(":")
+            course_number = int(split_course_title[0].split(" ")[1])
+            course_title = split_course_title[1][1:]
+        except (AttributeError, IndexError, ValueError) as e:
+            err_msg = course_soup.find("div", class_="errormessage") or course_soup.find("div", class_="errorbox")
+            if err_msg:
+                raise MoodleException(f"Moodle error: {err_msg.get_text(strip=True)}") from e
+            raise MoodleCourseNotFound(f"Course with the id {course_id} could not be parsed: {e}") from e
+
+        course_data = Course(course_id, course_number, course_title, [])
 
         for topic in course_soup.find_all("li", class_="section"):
             current_topic = self._get_topic(topic)
