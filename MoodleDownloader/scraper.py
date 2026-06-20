@@ -18,7 +18,7 @@ class Scraper:
         self.base_url = self.config.BASE_URL
 
     def _get_course(self, course_id: int) -> BeautifulSoup:
-        course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}")
+        course_page = self.session.get(f"{self.base_url}/course/view.php?id={course_id}", allow_redirects=False)
         if course_page.status_code == 404:
             raise MoodleCourseNotFound(f"Course with the id {course_id} was not found")
         course_soup = BeautifulSoup(course_page.content, "html.parser")
@@ -31,7 +31,8 @@ class Scraper:
                 try:
                     return ResourceType(cls.replace("modtype_", ""))
                 except ValueError:
-                    print(f"Type {cls.replace("modtype_", "")} not recognized")
+                    # INFO: This needs to be made into a logger.warning or something
+                    #print(f"Type {cls.replace("modtype_", "")} not recognized")
                     return ResourceType.UNKNOWN
         return ResourceType.UNKNOWN
 
@@ -49,7 +50,8 @@ class Scraper:
         try:
             topic_description = topic_element.find("div", class_="summarytext").get_text(" ", strip=True)
         except AttributeError:
-            print(f"Topic {topic_title}/{topic_element.attrs["id"]} seems to not have a description, skipping.")
+            # INFO: This needs to be made into a logger.warning or something
+            #print(f"Topic {topic_title}/{topic_element.attrs["id"]} seems to not have a description, skipping.")
             return None
         current_topic = Topic(topic_title, topic_description, [])
         for resource_item in topic_element.find("ul").find_all("li"):
