@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 
 from .auth import MoodleAuth
 from .config import DEFAULT_CONFIG, AppConfig
-from .models import Course, Topic, Resource, ResourceType
 from .exceptions import MoodleCourseNotFound, MoodleException
+from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
@@ -89,3 +89,19 @@ class Scraper:
             current_topic = self._get_topic(topic)
             course_data.Topics.append(current_topic)
         return course_data
+
+    def get_available_courses(self) -> list[dict[str, str]]:
+        if not self.auth.is_session_valid() and self.auth.credentials is not None:
+            self.auth.login()
+
+        body = '[{"index":0,"methodname":"core_course_get_enrolled_courses_by_timeline_classification","args":{"offset":0,"limit":0,"classification":"all","sort":"fullname","customfieldname":"","customfieldvalue":""}}]'
+        service_response = self.session.post(f"{self.base_url}/lib/ajax/service.php?sesskey={self.auth.moodle_session.sesskey}&info=core_course_get_enrolled_courses_by_timeline_classification", data=body)
+
+        results = service_response.json()
+        if results and isinstance(results, list) and len(results) > 0:
+            first_result = results[0]
+            if isinstance(first_result, dict) and first_result.get('error') is False:
+                courses_data = first_result.get('data', {}).get('courses', [])
+                return [{"id": c.get("id"), "fullname": c.get("fullname")} for c in courses_data if isinstance(c, dict)]
+
+        return []
