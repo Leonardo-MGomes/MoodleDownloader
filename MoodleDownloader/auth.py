@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -18,6 +19,7 @@ class MoodleCredentials:
 class MoodleSession:
     login_cookies: dict
     login_token: Optional[str] = None
+    sesskey: Optional[str] = None
 
 
 class MoodleAuth:
@@ -58,6 +60,17 @@ class MoodleAuth:
         login_token = token_input.attrs["value"]
         return login_token
 
+    def _extract_sesskey(self) -> str:
+        response = self.session.get(self.base_url)
+        if response.status_code != 200:
+            raise MoodleAuthError("Failed to fetch landing page for token extraction.")
+
+        sesskey_match = re.search(r'"sesskey":"([^"]+)"', response.text)
+        if not sesskey_match:
+            raise MoodleAuthError("Logged in successfully, but failed to find Moodle sesskey in the HTML response.")
+
+        return sesskey_match.group(1)
+
     def _perform_login(self, token: str) -> dict:
         if not self.credentials:
             raise MoodleNoCredentialsError("No credentials provided")
@@ -76,7 +89,9 @@ class MoodleAuth:
     def login(self) -> MoodleSession:
         login_token = self._fetch_login_token()
         login_cookies = self._perform_login(login_token)
-        moodle_session = MoodleSession(login_cookies, login_token)
+        moodle_sesskey = self._extract_sesskey()
+        moodle_session = MoodleSession(login_cookies, login_token, moodle_sesskey)
+        self.moodle_session = moodle_session
         if not self.is_session_valid():
             raise MoodleAuthError("Login failed: Invalid credentials or session could not be established")
         return moodle_session
