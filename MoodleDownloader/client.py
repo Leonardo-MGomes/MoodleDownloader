@@ -1,4 +1,5 @@
 import re
+from html.parser import HTMLParser
 from typing import Optional
 
 import requests
@@ -26,6 +27,15 @@ class MoodleClient:
             params.update(extra_params)
         return self.session.get(f"{self.base_url}/webservice/rest/server.php", params=params).json()
 
+    def _parse_html_to_plaintext(self, html: str) -> str:
+        text = []
+        html_parser = HTMLParser()
+        html_parser.handle_data = text.append
+        html_parser.feed(html)
+
+        return "".join(text)
+
+
     def get_course(self, course_id: int):
         course = self._call("core_course_get_courses_by_field", extra_params={"field":"id","value":course_id})["courses"][0]
         course_content = self._call("core_course_get_contents", extra_params={"courseid":course_id})
@@ -36,7 +46,7 @@ class MoodleClient:
         topic_obj_list = []
 
         for topic in course_content:
-            topic_obj = Topic(topic["id"], topic["name"], topic["summary"], [])
+            topic_obj = Topic(topic["id"], topic["name"], self._parse_html_to_plaintext(topic["summary"]), [])
             for resource in topic["modules"]:
                 resource_type = ResourceType(resource["modname"])
                 resource_obj = Resource(resource["id"], resource_type, resource["contextid"], resource["name"], None) # TODO: Dependencies can't be gotten from here, wasn't used much anyways so it's probably fine
