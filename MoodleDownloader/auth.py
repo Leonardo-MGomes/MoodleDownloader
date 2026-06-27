@@ -16,15 +16,15 @@ class MoodleCredentials:
 
 
 @dataclass
-class MoodleSession:
+class MoodleWebSession:
     login_cookies: dict
     login_token: Optional[str] = None
     sesskey: Optional[str] = None
 
 
-class MoodleAuth:
+class MoodleWebAuth:
     def __init__(self, session: requests.Session, moodle_credentials: Optional[MoodleCredentials] = None,
-                 moodle_session: Optional[MoodleSession] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
+                 moodle_session: Optional[MoodleWebSession] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
         self.base_url = app_config.BASE_URL
         self.user_agent = app_config.USER_AGENT
@@ -35,7 +35,7 @@ class MoodleAuth:
             requests.utils.add_dict_to_cookiejar(self.session.cookies, self.moodle_session.login_cookies)
 
     @classmethod
-    def from_credentials(cls, session: requests.Session, username: str, password: str, **kwargs) -> "MoodleAuth":
+    def from_credentials(cls, session: requests.Session, username: str, password: str, **kwargs) -> "MoodleWebAuth":
         credentials = MoodleCredentials(username, password)
         return cls(session=session, moodle_credentials=credentials, **kwargs)
 
@@ -86,11 +86,11 @@ class MoodleAuth:
         login_cookies = self.session.cookies.get_dict()
         return login_cookies
 
-    def login(self) -> MoodleSession:
+    def login(self) -> MoodleWebSession:
         login_token = self._fetch_login_token()
         login_cookies = self._perform_login(login_token)
         moodle_sesskey = self._extract_sesskey()
-        moodle_session = MoodleSession(login_cookies, login_token, moodle_sesskey)
+        moodle_session = MoodleWebSession(login_cookies, login_token, moodle_sesskey)
         self.moodle_session = moodle_session
         if not self.is_session_valid():
             raise MoodleAuthError("Login failed: Invalid credentials or session could not be established")

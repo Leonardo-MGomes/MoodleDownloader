@@ -1,5 +1,4 @@
-from .auth import MoodleAuth, MoodleSession, MoodleCredentials
-from .scraper import Scraper
+from .auth import MoodleWebAuth, MoodleWebSession, MoodleCredentials
 from .database import MoodleDatabase
 from .exceptions import (
     MoodleException,
@@ -10,11 +9,12 @@ from .exceptions import (
     MoodleResourceNotFound,
     MoodleFileNotFound,
 )
+from .scraper import Scraper
 
 __all__ = [
     'auth',
-    'MoodleAuth',
-    'MoodleSession',
+    'MoodleWebAuth',
+    'MoodleWebSession',
     'MoodleCredentials',
     'Scraper',
     'MoodleDatabase',

@@ -3,7 +3,7 @@ from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 
-from .auth import MoodleAuth
+from .auth import MoodleWebAuth
 from .config import DEFAULT_CONFIG, AppConfig
 from .exceptions import MoodleCourseNotFound, MoodleException
 from .models import Course, Topic, Resource, ResourceType
@@ -11,7 +11,7 @@ from .models import Course, Topic, Resource, ResourceType
 
 class Scraper:
     # auth is optional and only here for automatic logins
-    def __init__(self, session: requests.Session, auth: Optional[MoodleAuth] = None, config: Optional[AppConfig] = DEFAULT_CONFIG):
+    def __init__(self, session: requests.Session, auth: Optional[MoodleWebAuth] = None, config: Optional[AppConfig] = DEFAULT_CONFIG):
         self.session = session
         self.config = config
         self.auth = auth
