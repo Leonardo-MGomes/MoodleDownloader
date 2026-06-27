@@ -30,8 +30,8 @@ class MoodleClient:
         course = self._call("core_course_get_courses_by_field", extra_params={"field":"id","value":course_id})["courses"][0]
         course_content = self._call("core_course_get_contents", extra_params={"courseid":course_id})
 
-        course_name = course["fullname"]
-        course_number = re.search(r"\d{3}", course["fullname"]).group()
+        course_name = re.search(r"\d{3}:? (.+)", course["fullname"]).group(1)
+        course_number = re.search(r"(\d{3})", course["fullname"]).group(1)
 
         topic_obj_list = []
 
