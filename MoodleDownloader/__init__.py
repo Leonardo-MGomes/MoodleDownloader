@@ -1,4 +1,5 @@
 from .auth import MoodleWebAuth, MoodleWebSession, MoodleApiAuth, MoodleApiSession, MoodleCredentials
+from .client import MoodleClient
 from .database import MoodleDatabase
 from .exceptions import (
     MoodleException,
@@ -19,6 +20,7 @@ __all__ = [
     'MoodleApiSession',
     'MoodleCredentials',
     'Scraper',
+    'MoodleClient',
     'MoodleDatabase',
     'MoodleException',
     'MoodleAuthError',
