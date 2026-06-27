@@ -22,6 +22,12 @@ class MoodleWebSession:
     sesskey: Optional[str] = None
 
 
+@dataclass
+class MoodleApiSession:
+    token: str
+    private_token: Optional[str] = None
+
+
 class MoodleWebAuth:
     def __init__(self, session: requests.Session, moodle_credentials: Optional[MoodleCredentials] = None,
                  moodle_session: Optional[MoodleWebSession] = None, app_config: Optional[AppConfig] = DEFAULT_CONFIG):
@@ -94,4 +100,50 @@ class MoodleWebAuth:
         self.moodle_session = moodle_session
         if not self.is_session_valid():
             raise MoodleAuthError("Login failed: Invalid credentials or session could not be established")
+        return moodle_session
+
+
+class MoodleApiAuth:
+    def __init__(
+            self,
+            session: requests.Session,
+            moodle_credentials: Optional[MoodleCredentials] = None,
+            moodle_api_session: Optional[MoodleApiSession] = None,
+            app_config: Optional[AppConfig] = DEFAULT_CONFIG
+    ):
+        self.session = session
+        self.base_url = app_config.BASE_URL
+        self.session.headers["User-Agent"] = app_config.USER_AGENT
+        self.moodle_credentials = moodle_credentials
+        self.moodle_session = moodle_api_session
+
+    def is_session_valid(self) -> bool:
+        # the badges function was chosen because they typically return very little data
+        params = {
+            "wstoken": self.moodle_session.token,
+            "wsfunction": "core_badges_get_user_badges",
+            "moodlewsrestformat": "json"
+        }
+        response = self.session.get(f"{self.base_url}/webservice/rest/server.php", params=params)
+        print(response.url)
+        response_json = response.json()
+        print(response_json)
+        if "badges" in response_json:
+            return True
+        return False
+
+    def login(self) -> MoodleApiSession:
+        if self.moodle_credentials is None:
+            raise MoodleNoCredentialsError("No credentials provided")
+        data = {
+            "username": self.moodle_credentials.username,
+            "password": self.moodle_credentials.password,
+            "service": "moodle_mobile_app"
+        }
+
+        response = self.session.post(f"{self.base_url}/login/token.php", data=data)
+        response.raise_for_status()
+        response_json = response.json()
+        moodle_session = MoodleApiSession(response_json["token"], response_json["privatetoken"])
+        self.moodle_session = moodle_session
         return moodle_session
