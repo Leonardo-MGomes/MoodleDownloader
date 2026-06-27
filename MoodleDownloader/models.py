@@ -44,6 +44,7 @@ class Resource:
 
 @dataclass
 class Topic:
+    Id: int
     Title: str
     Description: str
     Resources: list[Resource]

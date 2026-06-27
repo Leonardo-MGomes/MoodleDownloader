@@ -1,7 +1,7 @@
 import sqlite3
 from typing import List
 
-from .models import Course, Topic, Resource, ResourceType
+from .models import Course, Topic, Resource
 
 
 class MoodleDatabase:
@@ -22,14 +22,14 @@ class MoodleDatabase:
             title TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS Topic (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+            moodle_id INTEGER NOT NULL PRIMARY KEY UNIQUE,
             course_id INTEGER NOT NULL REFERENCES Course(moodle_id),
             title TEXT NOT NULL,
             description TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS Resource (
             moodle_id INTEGER NOT NULL PRIMARY KEY UNIQUE,
-            topic_id INTEGER NOT NULL REFERENCES Topic(id),
+            topic_id INTEGER NOT NULL REFERENCES Topic(moodle_id),
             name TEXT NOT NUlL,
             type TEXT NOT NULL, 
             dependency_id INTEGER REFERENCES Resource(moodle_id)
@@ -46,17 +46,16 @@ class MoodleDatabase:
         topic_data = []
         for topic in course.Topics:
             if topic is None: continue
-            topic_data.append((None, course.Id, topic.Title, topic.Description))
+            topic_data.append((topic.Id, course.Id, topic.Title, topic.Description))
         self.cursor.executemany("INSERT OR IGNORE INTO Topic VALUES (?, ?, ?, ?)", topic_data)
         self.connection.commit()
 
         resource_data = []
         for topic in course.Topics:
             if topic is None: continue
-            topic_id = self.cursor.execute("SELECT id FROM Topic WHERE title = ? AND description = ?", (topic.Title, topic.Description)).fetchone()[0]
             for resource in topic.Resources:
                 if resource is None: continue
-                resource_data.append((resource.Id, topic_id, resource.Name, resource.Type.value, resource.DependencyId))
+                resource_data.append((resource.Id, topic.Id, resource.Name, resource.Type.value, resource.DependencyId))
         self.cursor.executemany("INSERT OR IGNORE INTO Resource VALUES (?, ?, ?, ?, ?)", resource_data)
         self.connection.commit()
         return
@@ -85,4 +84,3 @@ class MoodleDatabase:
         if data is None or int(data[0]) != course_id:
             return False
         return True
-

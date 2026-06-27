@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 
 from .auth import MoodleAuth
 from .config import DEFAULT_CONFIG, AppConfig
-from .models import Course, Topic, Resource, ResourceType
 from .exceptions import MoodleCourseNotFound, MoodleException
+from .models import Course, Topic, Resource, ResourceType
 
 
 class Scraper:
@@ -47,13 +47,14 @@ class Scraper:
 
     def _get_topic(self, topic_element) -> Topic | None:
         topic_title = topic_element.find("h3", attrs={"data-for": "section_title"}).get_text(" ", strip=True)
+        topic_id = topic_element.get("data-id")
         try:
             topic_description = topic_element.find("div", class_="summarytext").get_text(" ", strip=True)
         except AttributeError:
             # INFO: This needs to be made into a logger.warning or something
             #print(f"Topic {topic_title}/{topic_element.attrs["id"]} seems to not have a description, skipping.")
             return None
-        current_topic = Topic(topic_title, topic_description, [])
+        current_topic = Topic(topic_id, topic_title, topic_description, [])
         for resource_item in topic_element.find("ul").find_all("li"):
             resource = self._get_resource(resource_item)
             match resource.Type.name:  # PLACEHOLDER
