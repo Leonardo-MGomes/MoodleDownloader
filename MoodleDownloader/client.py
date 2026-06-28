@@ -17,6 +17,15 @@ class MoodleClient:
         self.moodle_session = moodle_session
         self.base_url = self.app_config.BASE_URL
 
+    @staticmethod
+    def _parse_html_to_plaintext(html: str) -> str:
+        text = []
+        html_parser = HTMLParser()
+        html_parser.handle_data = text.append
+        html_parser.feed(html)
+
+        return "".join(text)
+
     def _call(self, function: str, extra_params: Optional[dict] = None) -> dict:
         params = {
             "wstoken": self.moodle_session.token,
@@ -26,15 +35,6 @@ class MoodleClient:
         if extra_params:
             params.update(extra_params)
         return self.session.get(f"{self.base_url}/webservice/rest/server.php", params=params).json()
-
-    def _parse_html_to_plaintext(self, html: str) -> str:
-        text = []
-        html_parser = HTMLParser()
-        html_parser.handle_data = text.append
-        html_parser.feed(html)
-
-        return "".join(text)
-
 
     def get_course(self, course_id: int):
         course = self._call("core_course_get_courses_by_field", extra_params={"field":"id","value":course_id})["courses"][0]
