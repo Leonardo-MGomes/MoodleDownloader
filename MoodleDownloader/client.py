@@ -36,7 +36,7 @@ class MoodleClient:
             params.update(extra_params)
         return self.session.get(f"{self.base_url}/webservice/rest/server.php", params=params).json()
 
-    def get_course(self, course_id: int):
+    def get_course_content(self, course_id: int) -> Course:
         course = self._call("core_course_get_courses_by_field", extra_params={"field":"id","value":course_id})["courses"][0]
         course_content = self._call("core_course_get_contents", extra_params={"courseid":course_id})
 
